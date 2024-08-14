@@ -38,7 +38,7 @@ class LinkDialogue(QDialog):
 
     def __init__(self, parent=None):
         self.edit_word_head = None
-        self.user_url = ''
+        self.user_phrase = ''
         self.word = ''
         QDialog.__init__(self)
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, True)
@@ -53,14 +53,14 @@ class LinkDialogue(QDialog):
         self.setLayout(layout)
         self.edit_word_head = QLabel()
 
-        self.edit_word_head.setText(('''<h4>Enter link for parsing</h4>'''))
+        self.edit_word_head.setText(('''<h4>Enter phrase for parsing</h4>'''))
         bold_font = QFont()
         bold_font.setBold(True)
         self.edit_word_head.setFont(bold_font)
         layout.addWidget(self.edit_word_head)
 
         self.link_editor = QLineEdit()
-        self.link_editor.placeholderText = 'Enter your link here'
+        self.link_editor.placeholderText = 'Enter your phrase here'
         layout.addWidget(self.link_editor)
 
         dialog_buttons = QDialogButtonBox(self)
@@ -72,14 +72,16 @@ class LinkDialogue(QDialog):
         self.link_editor.setFocus()
 
     def get_word_definitions_from_link(self):
-        self.user_url = self.link_editor.text()
-        if not self.user_url:
-            QMessageBox.warning(mw, 'Link is not provided', 'Please, provide a link for you word or phrase.')
+        self.user_phrase = self.link_editor.text()
+        if not self.user_phrase.startswith('https://dictionary.cambridge.org/'):
+            self.user_phrase = f'https://dictionary.cambridge.org/dictionary/english/{self.user_phrase}'
+        if not self.user_phrase:
+            QMessageBox.warning(mw, 'Phrase is not provided', 'Please, provide a phrase for you word or phrase.')
             return
 
         downloader = mw.cddownloader
         # downloader.clean_up()
-        downloader.user_url = self.user_url
+        downloader.user_url = self.user_phrase
         downloader.get_word_defs()
         self.setResult(QDialog.DialogCode.Accepted)
         self.done(QDialog.DialogCode.Accepted)
@@ -183,7 +185,7 @@ class WordDefDialogue(QDialog):
         for wd_entry in self.word_data:
             for word_to_save in self.selected_defs:
                 if wd_entry.word_specific == word_to_save:
-                    add_word(wd_entry, self.model)
+                    add_word(self, wd_entry, self.model)
         self.accept()
 
     def set_model(self):
@@ -206,11 +208,11 @@ class WordDefDialogue(QDialog):
         word['Sounds'] = [word_to_add['word_uk_media'], word_to_add['word_us_media']]
         word['Picture'] = word_to_add['word_image']
 
-        add_word(word, self.model)
+        add_word(self, word, self.model)
 
     def save_all(self):
         for wd_entry in self.word_data:
-            add_word(wd_entry, self.model)
+            add_word(self, wd_entry, self.model)
         self.done(0)
 
 

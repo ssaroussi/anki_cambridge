@@ -57,9 +57,19 @@ def fill_note(word_entry, note):
     note['Picture'] = picture_field
     return note
 
-def add_word(word, model):
+def is_word_in_collection(word):
+    query = f'Word:"{word.word_title}"'
+    note_ids = mw.col.findNotes(query)
+    return len(note_ids) > 0
+
+def add_word(dialog, word, model):
     # TODO: Use picture_name and sound_name to check
     #  if update is needed and don't download media if not
+
+    if is_word_in_collection(word):
+        QMessageBox.information(dialog, 'Oops', f'"{word.word_title}" already exists in the collection')
+        return
+
     collection = mw.col
     note = notes.Note(collection, model)
     note = fill_note(word, note)
@@ -151,7 +161,7 @@ def prepare_model(collection, fields, model_css):
         model = create_new_model(collection, fields, model_css)
     # TODO: Move Deck name to config?
     # Create a deck "Cambridge" and write id to deck_id
-    model['did'] = collection.decks.id('Cambridge')
+    model['did'] = collection.decks.id('Mind::Vocabulary::Cambridge')
     collection.models.setCurrent(model)
     collection.models.save(model)
     return model
